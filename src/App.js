@@ -3,13 +3,14 @@ import { Route, Switch } from "react-router-dom";
 import Authebticated from "./Components/Authebticated";
 import Dashboard from "./Pages/Dashboard";
 import Login from "./Pages/Login";
+import Nav from "./Fragments/Nav";
 
 function App() {
   return (
     <Switch>
       <Route exact path="/">
         <Authebticated>
-          <Dashboard />
+          <Nav />
         </Authebticated>
       </Route>
       <Route exact path="/Login">
