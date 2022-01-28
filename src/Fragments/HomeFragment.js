@@ -37,8 +37,11 @@ import { loadCategoryPage } from "../Components/Actions/categoryPageAction";
 import { loadOrders } from "../Components/Actions/OrdersAction";
 import GridView from "../Components/GridView";
 import HorizontalScroller from "../Components/HorizontalScroller";
+import MiniShop from "../Components/MiniShop";
+import NewHori from "../Components/NewHori";
 import ProductView from "../Components/ProductView";
 import StripAsView from "../Components/StripAsView";
+import WordLay from "../Components/WordLay";
 import { firestore, storageRef } from "../firebase";
 import BannerSlider from "./BannerSlider";
 
@@ -66,6 +69,7 @@ export class HomeFragment extends Component {
       layout_title_bg: "#000000",
       layout_secondTitle_bg: "#000000",
       snackbar: "",
+      word_image: "",
     };
   }
 
@@ -115,12 +119,11 @@ export class HomeFragment extends Component {
       searching: true,
     });
 
-    let keywords = this.state.search.split("");
+    let keywords = this.state.search.split(" ");
 
     firestore
       .collection("PRODUCTS")
-
-      .whereFiels("tags", "array-contains-any", keywords)
+      .where("tags", "array-contains-any", keywords)
       .get()
       .then((querySnapshot) => {
         let productlist = [];
@@ -541,6 +544,35 @@ export class HomeFragment extends Component {
         this.uploadProductSection();
 
         break;
+
+      case 17:
+        if (!this.state.layout_title) {
+          this.setState({
+            layout_titleError: "Required!",
+          });
+
+          return;
+        }
+
+        if (!this.state.secondTitle) {
+          this.setState({
+            secondTitleError: "Required!",
+          });
+
+          return;
+        }
+
+        if (this.state.selectedProducts.length < 1) {
+          this.setState({
+            snackbar: "Please Select At Least 1 Products!",
+          });
+
+          return;
+        }
+        this.uploadProductSection();
+
+        break;
+
       case 3:
         if (!this.state.layout_title) {
           this.setState({
@@ -562,6 +594,99 @@ export class HomeFragment extends Component {
           return;
         }
         this.uploadProductSection();
+        break;
+
+      case 9:
+        this.setState({
+          loading: true,
+        });
+
+        let data;
+
+        if (this.state.editMode) {
+          data = {
+            view_type: this.state.view_type,
+            index: parseInt(this.state.position),
+            word: this.state.word,
+            word_image: this.state.word_image,
+          };
+        } else {
+          data = {
+            view_type: this.state.view_type,
+            index: parseInt(this.state.position),
+            word: this.state.word,
+            word_image: this.state.word_image,
+          };
+        }
+
+        const onComplete = () => {
+          let sections = this.props.categoryPages[this.state.page];
+          if (this.state.editMode) {
+            data["id"] = this.state.doc_id;
+            let section = sections.filter(
+              (item) => item.id === this.state.doc_id
+            )[0];
+            sections[sections.indexOf(section)] = data;
+          } else {
+            sections.push(data);
+            sections.sort((a, b) => a.index - b.index);
+          }
+
+          this.props.addSection(this.state.page, sections);
+
+          this.setState({
+            position: null,
+            images: [],
+            colors: [],
+            view_type: 0,
+            loading: false,
+            addDialog: false,
+            editMode: false,
+            selectedProducts: [],
+            layout_title: null,
+            secondTitle: null,
+            layout_background: null,
+            TitleColor: null,
+            SecondTitleColor: null,
+            word_title: null,
+          });
+        };
+
+        if (this.state.editMode) {
+          firestore
+            .collection("CATEGORIES")
+            .doc(this.state.page)
+            .collection("TOP_DEALS")
+
+            .doc(this.state.doc_id)
+            .set(data)
+            .then(function (doc) {
+              onComplete();
+            })
+            .catch((err) => {
+              this.setState({
+                loading: false,
+              });
+              //error
+            });
+        } else {
+          firestore
+            .collection("CATEGORIES")
+            .doc(this.state.page)
+            .collection("TOP_DEALS")
+            .add(data)
+            .then(function (doc) {
+              data["id"] = doc.id;
+              onComplete();
+            })
+            .catch((err) => {
+              this.setState({
+                loading: false,
+              });
+              //error
+            });
+        }
+
         break;
       default:
     }
@@ -909,6 +1034,225 @@ export class HomeFragment extends Component {
                         />
                       );
 
+                    case 5:
+                      let miniShopData = [];
+
+                      if (!item.loaded) {
+                        item.products.forEach((id, index) => {
+                          firestore
+                            .collection("SHOPS")
+                            .doc(id)
+                            .get()
+                            .then((document) => {
+                              if (document.exists) {
+                                let productData = {
+                                  id: id,
+                                  title: document.data()["shopName"],
+                                  // subtitle: document.data()["product_subtitle"],
+                                  // price: document.data()["product_price"],
+                                  image: document.data()["icon8"],
+                                };
+
+                                miniShopData.push(productData);
+                                if (index === item.products.length - 1) {
+                                  item.products = miniShopData;
+                                  item["loaded"] = true;
+                                  this.setState({});
+                                }
+                              }
+                            })
+                            .catch((err) => {
+                              //error
+                            });
+                        });
+                      }
+
+                      return (
+                        <MiniShop
+                          edit={() => {
+                            ///Edit
+                            this.setState({
+                              view_type: item.view_type,
+                              position: item.index,
+                              selectedProducts: item.products,
+                              layout_title: item.layout_title,
+                              layout_bg: item.layout_background,
+                              TitleColor: item.TitleColor,
+                              SecondTitleColor: item.SecondTitleColor,
+                              addDialog: true,
+                              editMode: true,
+                              doc_id: item.id,
+                            });
+                          }}
+                          delete={() =>
+                            this.setState(
+                              {
+                                loading: true,
+                              },
+                              () => {
+                                firestore
+                                  .collection("CATEGORIES")
+                                  .doc(this.state.page)
+                                  .collection("TOP_DEALS")
+                                  .doc(item.id)
+                                  .delete()
+                                  .then(() => {
+                                    this.props.categoryPages[
+                                      this.state.page
+                                    ].splice(indexMain, 1);
+                                    this.setState({
+                                      loading: false,
+                                    });
+                                  })
+                                  .catch((err) => {
+                                    this.setState({
+                                      loading: false,
+                                    });
+                                  });
+                              }
+                            )
+                          }
+                          products={item.products}
+                          title={item.layout_title}
+                          subbtitle={item.secondTitle}
+                          background={item.layout_background}
+                        />
+                      );
+
+                    case 17:
+                      let horiProductsData = [];
+
+                      if (!item.loaded) {
+                        item.products.forEach((id, index) => {
+                          firestore
+                            .collection("PRODUCTS")
+                            .doc(id)
+                            .get()
+                            .then((document) => {
+                              if (document.exists) {
+                                let productData = {
+                                  id: id,
+                                  title: document.data()["product_title"],
+                                  subtitle: document.data()["product_subtitle"],
+                                  price: document.data()["product_price"],
+                                  image: document.data()["product_image_1"],
+                                };
+
+                                horiProductsData.push(productData);
+                                if (index === item.products.length - 1) {
+                                  item.products = horiProductsData;
+                                  item["loaded"] = true;
+                                  this.setState({});
+                                }
+                              }
+                            })
+                            .catch((err) => {
+                              //error
+                            });
+                        });
+                      }
+
+                      return (
+                        <NewHori
+                          edit={() => {
+                            ///Edit
+                            this.setState({
+                              view_type: item.view_type,
+                              position: item.index,
+                              selectedProducts: item.products,
+                              layout_title: item.layout_title,
+                              layout_bg: item.layout_background,
+                              TitleColor: item.TitleColor,
+                              SecondTitleColor: item.SecondTitleColor,
+                              addDialog: true,
+                              editMode: true,
+                              doc_id: item.id,
+                            });
+                          }}
+                          delete={() =>
+                            this.setState(
+                              {
+                                loading: true,
+                              },
+                              () => {
+                                firestore
+                                  .collection("CATEGORIES")
+                                  .doc(this.state.page)
+                                  .collection("TOP_DEALS")
+                                  .doc(item.id)
+                                  .delete()
+                                  .then(() => {
+                                    this.props.categoryPages[
+                                      this.state.page
+                                    ].splice(indexMain, 1);
+                                    this.setState({
+                                      loading: false,
+                                    });
+                                  })
+                                  .catch((err) => {
+                                    this.setState({
+                                      loading: false,
+                                    });
+                                  });
+                              }
+                            )
+                          }
+                          products={item.products}
+                          horititle={item.layout_title}
+                          horisubbtitle={item.secondTitle}
+                          background={item.layout_background}
+                        />
+                      );
+
+                    case 9:
+                      return (
+                        <WordLay
+                          edit={() => {
+                            ///Edit
+                            this.setState({
+                              view_type: item.view_type,
+                              position: item.index,
+                              image: item.word_image,
+                              word: item.word,
+
+                              addDialog: true,
+                              editMode: true,
+                              doc_id: item.id,
+                            });
+                          }}
+                          delete={() =>
+                            this.setState(
+                              {
+                                loading: true,
+                              },
+                              () => {
+                                firestore
+                                  .collection("CATEGORIES")
+                                  .doc(this.state.page)
+                                  .collection("TOP_DEALS")
+                                  .doc(item.id)
+                                  .delete()
+                                  .then(() => {
+                                    this.props.categoryPages[
+                                      this.state.page
+                                    ].splice(indexMain, 1);
+                                    this.setState({
+                                      loading: false,
+                                    });
+                                  })
+                                  .catch((err) => {
+                                    this.setState({
+                                      loading: false,
+                                    });
+                                  });
+                              }
+                            )
+                          }
+                          word={item.word}
+                          image={item.word_image}
+                        />
+                      );
+
                     case 3:
                       let gridproductsData = [];
 
@@ -1065,6 +1409,9 @@ export class HomeFragment extends Component {
                 <MenuItem value={1}>STRIP AD</MenuItem>
                 <MenuItem value={2}>HORIZONTAL VIEW</MenuItem>
                 <MenuItem value={3}>GRID VIEW</MenuItem>
+                <MenuItem value={9}>WORD VIEW</MenuItem>
+                <MenuItem value={17}>MINI HORIZONTAL VIEW</MenuItem>
+                <MenuItem value={5}>MINI SHOP VIEW</MenuItem>
               </Select>
               <br />
               <TextField
@@ -1166,7 +1513,9 @@ export class HomeFragment extends Component {
               </label>
             ) : null}
             <br />
-            {(this.state.view_type === 2 || this.state.view_type === 3) && (
+            {(this.state.view_type === 2 ||
+              this.state.view_type === 3 ||
+              this.state.view_type === 17) && (
               <div>
                 <Box
                   style={{
@@ -1203,7 +1552,7 @@ export class HomeFragment extends Component {
                       onChange={this.onFieldChange}
                       error={this.state.secondTitleError !== ""}
                       helperText={this.state.secondTitleError}
-                      defaultValue={this.state.layout_title}
+                      defaultValue={this.state.secondTitle}
                       name="secondTitle"
                       variant="standard"
                     />
@@ -1329,6 +1678,22 @@ export class HomeFragment extends Component {
                   </Box>
                 )}
               </div>
+            )}
+
+            {(this.state.view_type === 9 || this.state.view_type === 3) && (
+              <Box style={{ backgroundColor: "white", width: "95%" }}>
+                <TextField
+                  id="filled-basic"
+                  label="Title"
+                  style={{ width: "100%" }}
+                  onChange={this.onFieldChange}
+                  error={this.state.layout_titleError !== ""}
+                  helperText={this.state.layout_titleError}
+                  defaultValue={this.state.word}
+                  name="word"
+                  variant="standard"
+                />
+              </Box>
             )}
           </Box>
         </Dialog>

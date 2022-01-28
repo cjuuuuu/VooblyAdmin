@@ -101,7 +101,6 @@ class ManageCategoryFragment extends Component {
     return (
       <div>
         <Container>
-          dfdsf
           <MaterialTable
             icons={tableIcons}
             table="Orders"
