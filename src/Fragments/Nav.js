@@ -28,6 +28,7 @@ import { IconButton } from "@material-ui/core";
 import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
+import ManageProducts from "./ManageProducts";
 
 const drawerWidth = 240;
 
@@ -113,6 +114,9 @@ export default function ClippedDrawer() {
       case "ADD_PRODUCT":
         return <AddProducts />;
 
+      case "MP":
+        return <ManageProducts />;
+
       default:
         break;
     }
@@ -174,15 +178,15 @@ export default function ClippedDrawer() {
               <ListItemIcon>
                 <CategoryRounded />
               </ListItemIcon>
-              <ListItemText primary="Categories" />
+              <ListItemText primary="Products" />
             </ListItem>
             <ListItem button onClick={(e) => setfragment("ADD_PRODUCT")}>
               <ListItemIcon>
                 <AddBoxRounded />
               </ListItemIcon>
-              <ListItemText primary="Products" />
+              <ListItemText primary="AddProducts" />
             </ListItem>
-            <ListItem button>
+            <ListItem button onClick={(e) => setfragment("MP")}>
               <ListItemIcon>
                 <ShoppingCartRounded />
               </ListItemIcon>

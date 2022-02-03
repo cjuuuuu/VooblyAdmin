@@ -1,4 +1,4 @@
-import { Container } from "@material-ui/core";
+import { Container, TextField } from "@material-ui/core";
 import MaterialTable from "material-table";
 import React, { Component } from "react";
 import { connect } from "react-redux";
@@ -20,7 +20,7 @@ import Remove from "@material-ui/icons/Remove";
 import SaveAlt from "@material-ui/icons/SaveAlt";
 import Search from "@material-ui/icons/Search";
 import ViewColumn from "@material-ui/icons/ViewColumn";
-import { loadOrders } from "../Components/Actions/OrdersAction";
+import { loadOrders, updateOrders } from "../Components/Actions/OrdersAction";
 import { firestore } from "../firebase";
 
 export const tableIcons = {
@@ -56,9 +56,14 @@ class ManageCategoryFragment extends Component {
         // { title: "Name", field: "index", type: "numeric" },
 
         /////
-        { title: "Name", field: "product_title" },
-        { title: "Order Status", field: "product_subtitle" },
-        { title: "Payment Status", field: "product_price" },
+        {
+          title: "Product Name",
+          field: "product_title",
+        },
+        { title: "Shop Name", field: "product_subtitle" },
+        { title: "Product Price", field: "product_price", type: "numeric" },
+        { title: "Stock Quantity", field: "stock_quantity", type: "numeric" },
+
         // { title: "Total Amount", field: "Total Amount", type: "numeric" },
         // { title: "Total Items", field: "Total Items", type: "numeric" },
         // {
@@ -69,7 +74,7 @@ class ManageCategoryFragment extends Component {
 
         // {
         //   title: "name",
-        //   field: "icon",
+        //   field: "product_image_1",
         //   render: (rowData) => (
         //     <img
         //       src={rowData.icon}
@@ -99,52 +104,61 @@ class ManageCategoryFragment extends Component {
 
   render() {
     return (
-      <div>
-        <Container>
-          <MaterialTable
-            icons={tableIcons}
-            table="Orders"
-            columns={this.state.columns}
-            data={this.state.data}
-            editable={{
-              onRowAdd: (newData) =>
-                new Promise((resolve) => {
-                  resolve();
+      console.log(this.state.data),
+      (
+        <div>
+          <Container>
+            <MaterialTable
+              icons={tableIcons}
+              table="Orders"
+              columns={this.state.columns}
+              data={this.state.data}
+              editable={{
+                onRowAdd: (newData) =>
+                  new Promise((resolve) => {
+                    resolve();
 
-                  this.setState((prevState) => {
-                    const data = [...prevState.data];
-                    console.log(this.props.newData);
-                    data.push(newData);
-                    return { ...prevState, data };
-                  });
-                }),
-
-              onRowUpdate: (newData, oldData) =>
-                new Promise((resolve) => {
-                  resolve();
-
-                  if (oldData) {
                     this.setState((prevState) => {
                       const data = [...prevState.data];
-                      data[data.indexOf(oldData)] = newData;
-
+                      console.log(this.props.newData);
+                      data.push(newData);
                       return { ...prevState, data };
                     });
-                  }
-                }),
-              onRowDelete: (oldData) =>
-                new Promise((resolve) => {
-                  resolve();
-                  this.setState((prevState) => {
-                    const data = [...prevState.data];
-                    data.splice(data.indexOf(oldData), 1);
-                    return { ...prevState, data };
-                  });
-                }),
-            }}
-          />
-        </Container>
-      </div>
+                  }),
+
+                onRowUpdate: (newData, oldData) =>
+                  new Promise((resolve) => {
+                    if (
+                      newData.product_title === oldData.product_title &&
+                      newData.product_price === oldData.product_price &&
+                      newData.product_subtitle === oldData.product_subtitle &&
+                      newData.stock_quantity === oldData.stock_quantity
+                    ) {
+                      resolve();
+                      console.log(oldData);
+                    } else {
+                      this.props.updateOrders(
+                        newData,
+                        () => resolve(),
+                        (error) => resolve()
+                      );
+                      console.log(newData);
+                    }
+                  }),
+                onRowDelete: (oldData) =>
+                  new Promise((resolve) => {
+                    resolve();
+                    this.setState((prevState) => {
+                      const data = [...prevState.data];
+                      data.splice(data.indexOf(oldData), 1);
+                      return { ...prevState, data };
+                    });
+                  }),
+              }}
+            />
+          </Container>
+        </div>
+      )
     );
   }
 }
@@ -159,6 +173,8 @@ const mapDispatchToProps = (dispatch) => {
   return {
     loadOrders: (onSuccess, onError) =>
       dispatch(loadOrders(onSuccess, onError)),
+    updateOrders: (data, onSuccess, onError) =>
+      dispatch(updateOrders(data, onSuccess, onError)),
   };
 };
 

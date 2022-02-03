@@ -5,6 +5,17 @@ const orderReducer = (state = initState, action) => {
     case "LOAD_ORDERS":
       state = action.payload;
       break;
+
+    case "UPDATE_ORDERS":
+      let list = [...state];
+      let index = state.indexOf(
+        list.filter((item) => item.id === action.payload.id)[0]
+      );
+      list[index] = action.payload;
+      state = list;
+
+      break;
+
     default:
       break;
   }
