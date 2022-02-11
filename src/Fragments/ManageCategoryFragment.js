@@ -61,7 +61,7 @@ class ManageCategoryFragment extends Component {
           field: "product_title",
         },
         { title: "Shop Name", field: "product_subtitle" },
-        { title: "Product Price", field: "product_price", type: "numeric" },
+        { title: "Product Price", field: "product_price" },
         { title: "Stock Quantity", field: "stock_quantity", type: "numeric" },
 
         // { title: "Total Amount", field: "Total Amount", type: "numeric" },
