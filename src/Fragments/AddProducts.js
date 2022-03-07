@@ -215,7 +215,7 @@ class AddProducts extends Component {
         product_description: this.state.description.value,
         tags: this.state.tags.value.split(","),
         stock_quantity: parseInt(this.state.stock_quantity.value),
-        COD: Boolean(this.state.COD.value),
+        COD: Boolean(true),
         average_rating: "",
         total_ratings: parseInt("0"),
         use_tab_layout: Boolean(false),
@@ -634,21 +634,6 @@ class AddProducts extends Component {
         />
 
         <br />
-
-        <FormControlLabel
-          control={
-            <Switch
-              name="COD"
-              color="primary"
-              onChange={(e) =>
-                this.setState({
-                  COD: e.target.checked,
-                })
-              }
-            />
-          }
-          label="COD"
-        />
 
         <br />
 
