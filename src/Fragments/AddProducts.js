@@ -23,10 +23,12 @@ class AddProducts extends Component {
 
     this.state = {
       images: [],
-      COD: false,
+      COD: true,
       loading: false,
+      use_tab_layout: false,
       variation_type: "variation_selection",
       product_title: { error: "", value: "" },
+      product_subtitle: { error: "", value: "" },
       price: { error: "", value: "" },
       cutted_price: { error: "", value: "0" },
       free_coupons: { error: "", value: "0" },
@@ -202,6 +204,7 @@ class AddProducts extends Component {
         added_on: firebase.firestore.Timestamp.fromDate(new Date()),
         no_of_product_images: urls.length,
         product_title: this.state.product_title.value,
+        product_subtitle: this.state.product_subtitle.value,
         product_price: this.state.price.value,
         cutted_price: this.state.cutted_price.value,
         free_coupens: parseInt(this.state.free_coupons.value),
@@ -215,7 +218,7 @@ class AddProducts extends Component {
         COD: Boolean(this.state.COD.value),
         average_rating: "",
         total_ratings: parseInt("0"),
-        // use_tab_layout: this.state.tabChecked.value,
+        use_tab_layout: Boolean(false),
         ["1_star"]: parseInt("0"),
         ["2_star"]: parseInt("0"),
         ["3_star"]: parseInt("0"),
@@ -251,11 +254,11 @@ class AddProducts extends Component {
       }
 
       urls.forEach((url, index) => {
-        data["product_image" + (index + 1)] = url;
+        data["product_image_" + (index + 1)] = url;
       });
 
       firestore
-        .collection("ZUMKA")
+        .collection("PRODUCTS")
 
         .add(data)
         .then(function (doc) {
@@ -346,6 +349,20 @@ class AddProducts extends Component {
           error={this.state.product_title.error !== ""}
           helperText={this.state.product_title.error}
           defaultValue={this.state.product_title.value}
+          variant="outlined"
+          size="small"
+        />
+
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Shop Name"
+          id="outlined-size-small"
+          onChange={this.onChange}
+          name="product_subtitle"
+          error={this.state.product_subtitle.error !== ""}
+          helperText={this.state.product_subtitle.error}
+          defaultValue={this.state.product_subtitle.value}
           variant="outlined"
           size="small"
         />
